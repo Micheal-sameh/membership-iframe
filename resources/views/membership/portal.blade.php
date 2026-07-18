@@ -29,5 +29,6 @@
     </main>
 
     {{-- @include('membership.partials.no-devtools') --}}
+    @include('membership.partials.install-prompt')
 </body>
 </html>
