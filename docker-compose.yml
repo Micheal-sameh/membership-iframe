@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: membership_app
+    restart: unless-stopped
+    user: www-data
+    env_file:
+      - .env
+    environment:
+      RUN_MIGRATIONS: "false"
+    ports:
+      - "1100:9000"
+    volumes:
+      - .:/var/www/membership
+      - membership_vendor:/var/www/membership/vendor
+    networks:
+      - central_net
+
+volumes:
+  membership_vendor:
+
+networks:
+  central_net:
+    external: true

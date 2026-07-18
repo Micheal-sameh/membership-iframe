@@ -80,7 +80,7 @@ class MfaController extends Controller
         }
 
         $appName = config('app.name', 'Membership Portal');
-        $qrCodeSvg = $this->mfa->getQrCodeSvg($appName, $pendingUser['login'], $secret);
+        $qrCodeSvg = $this->mfa->getQrCodeSvg($appName, $pendingUser['email'], $secret);
 
         return view('membership.mfa-setup', [
             'qrCodeSvg' => $qrCodeSvg,

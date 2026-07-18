@@ -6,18 +6,18 @@ use Illuminate\Support\Facades\DB;
 
 class MfaRepository
 {
-    public function findByOdooUserId(int $odooUserId): ?object
+    public function findByUserId(int $userId): ?object
     {
-        return DB::table('user_roles')
-            ->where('odoo_user_id', $odooUserId)
-            ->select('odoo_user_id', 'mfa_enabled', 'mfa_secret', 'mfa_enabled_at')
+        return DB::table('users')
+            ->where('id', $userId)
+            ->select('id', 'mfa_enabled', 'mfa_secret', 'mfa_enabled_at')
             ->first();
     }
 
-    public function enableMfa(int $odooUserId, string $encryptedSecret): void
+    public function enableMfa(int $userId, string $encryptedSecret): void
     {
-        DB::table('user_roles')
-            ->where('odoo_user_id', $odooUserId)
+        DB::table('users')
+            ->where('id', $userId)
             ->update([
                 'mfa_enabled' => true,
                 'mfa_secret' => $encryptedSecret,
@@ -25,10 +25,10 @@ class MfaRepository
             ]);
     }
 
-    public function disableMfa(int $odooUserId): void
+    public function disableMfa(int $userId): void
     {
-        DB::table('user_roles')
-            ->where('odoo_user_id', $odooUserId)
+        DB::table('users')
+            ->where('id', $userId)
             ->update([
                 'mfa_enabled' => false,
                 'mfa_secret' => null,

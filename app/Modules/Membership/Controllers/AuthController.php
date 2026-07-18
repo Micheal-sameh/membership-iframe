@@ -31,7 +31,7 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt(['login' => $credentials['login'], 'password' => $credentials['password']])) {
+        if (! Auth::attempt(['email' => $credentials['login'], 'password' => $credentials['password']])) {
             $message = app()->getLocale() === 'ar'
                 ? 'بيانات الدخول غير صحيحة.'
                 : 'The provided credentials do not match our records.';
@@ -43,12 +43,24 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
+        if (! $user->is_active) {
+            Auth::logout();
+
+            $message = app()->getLocale() === 'ar'
+                ? 'تم تعطيل هذا الحساب. يرجى التواصل مع المسؤول.'
+                : 'This account has been deactivated. Please contact an administrator.';
+
+            return back()
+                ->withErrors(['login' => $message])
+                ->withInput($request->only('login'));
+        }
+
         // Credentials are valid, but the real session only starts once MFA passes.
         Auth::logout();
 
         session(['membership_mfa_pending_user' => [
             'id'    => $user->id,
-            'login' => $user->login,
+            'email' => $user->email,
         ]]);
 
         if ($this->mfa->isEnabled($user->id)) {

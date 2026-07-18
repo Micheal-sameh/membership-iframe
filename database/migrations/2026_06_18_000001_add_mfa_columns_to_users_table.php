@@ -8,8 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('user_roles', function (Blueprint $table) {
-            $table->boolean('mfa_enabled')->default(false)->after('role_id');
+        Schema::table('users', function (Blueprint $table) {
+            $table->boolean('mfa_enabled')->default(false)->after('password');
             $table->text('mfa_secret')->nullable()->after('mfa_enabled');
             $table->timestamp('mfa_enabled_at')->nullable()->after('mfa_secret');
         });
@@ -17,7 +17,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('user_roles', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
             $table->dropColumn(['mfa_enabled', 'mfa_secret', 'mfa_enabled_at']);
         });
     }

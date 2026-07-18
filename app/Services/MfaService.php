@@ -42,16 +42,16 @@ class MfaService
         return (bool) $this->google2fa->verifyKey($secret, $otp);
     }
 
-    public function isEnabled(int $odooUserId): bool
+    public function isEnabled(int $userId): bool
     {
-        $row = $this->repository->findByOdooUserId($odooUserId);
+        $row = $this->repository->findByUserId($userId);
 
         return $row && $row->mfa_enabled;
     }
 
-    public function getSecret(int $odooUserId): ?string
+    public function getSecret(int $userId): ?string
     {
-        $row = $this->repository->findByOdooUserId($odooUserId);
+        $row = $this->repository->findByUserId($userId);
 
         if (!$row || !$row->mfa_secret) {
             return null;
@@ -60,13 +60,13 @@ class MfaService
         return decrypt($row->mfa_secret);
     }
 
-    public function enable(int $odooUserId, string $secret): void
+    public function enable(int $userId, string $secret): void
     {
-        $this->repository->enableMfa($odooUserId, encrypt($secret));
+        $this->repository->enableMfa($userId, encrypt($secret));
     }
 
-    public function disable(int $odooUserId): void
+    public function disable(int $userId): void
     {
-        $this->repository->disableMfa($odooUserId);
+        $this->repository->disableMfa($userId);
     }
 }
