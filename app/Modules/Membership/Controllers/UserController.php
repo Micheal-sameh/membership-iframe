@@ -86,4 +86,14 @@ class UserController extends Controller
 
         return redirect()->route('membership.users.edit', $user)->with('status', 'password-updated');
     }
+
+    public function resetMfa(User $user)
+    {
+        $user->mfa_enabled = false;
+        $user->mfa_secret = null;
+        $user->mfa_enabled_at = null;
+        $user->save();
+
+        return redirect()->route('membership.users.index')->with('status', 'mfa-reset');
+    }
 }

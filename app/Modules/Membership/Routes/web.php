@@ -37,5 +37,6 @@ Route::middleware('membership.auth')->group(function () {
         Route::get('/{user}/edit',         [UserController::class, 'edit'])->name('edit');
         Route::put('/{user}',              [UserController::class, 'update'])->name('update');
         Route::put('/{user}/password',     [UserController::class, 'updatePassword'])->name('password');
+        Route::post('/{user}/mfa/reset',   [UserController::class, 'resetMfa'])->name('mfa.reset');
     });
 });

@@ -44,6 +44,11 @@
                 <span class="material-symbols-outlined text-base">check_circle</span>
                 {{ $isRtl ? 'تم تحديث كلمة المرور بنجاح.' : 'Password updated successfully.' }}
             </div>
+            @elseif(session('status') === 'mfa-reset')
+            <div class="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm font-medium flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">check_circle</span>
+                {{ $isRtl ? 'تمت إعادة تعيين المصادقة الثنائية بنجاح.' : 'MFA reset successfully.' }}
+            </div>
             @endif
 
             <div class="bg-surface-container-lowest rounded-xl login-card-shadow border border-secondary/10 overflow-hidden">
@@ -115,11 +120,22 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <a href="{{ route('membership.users.edit', $u) }}"
-                                   class="inline-flex items-center gap-1 text-primary hover:text-secondary transition-colors text-xs font-semibold">
-                                    <span class="material-symbols-outlined text-sm">edit</span>
-                                    {{ $isRtl ? 'تعديل' : 'Edit' }}
-                                </a>
+                                <div class="flex items-center justify-end gap-3">
+                                    @if($u->mfa_enabled)
+                                    <button type="button"
+                                            class="mfa-reset-trigger inline-flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors text-xs font-semibold"
+                                            data-reset-url="{{ route('membership.users.mfa.reset', $u) }}"
+                                            data-user-name="{{ $u->name }}">
+                                        <span class="material-symbols-outlined text-sm">lock_reset</span>
+                                        {{ $isRtl ? 'إعادة تعيين المصادقة الثنائية' : 'Reset MFA' }}
+                                    </button>
+                                    @endif
+                                    <a href="{{ route('membership.users.edit', $u) }}"
+                                       class="inline-flex items-center gap-1 text-primary hover:text-secondary transition-colors text-xs font-semibold">
+                                        <span class="material-symbols-outlined text-sm">edit</span>
+                                        {{ $isRtl ? 'تعديل' : 'Edit' }}
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         @endforeach
@@ -129,5 +145,132 @@
             </div>
         </div>
     </main>
+
+    <div id="mfa-reset-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+        <div class="bg-surface-container-lowest rounded-xl login-card-shadow border border-secondary/10 max-w-sm w-full p-6">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined">lock_reset</span>
+                </div>
+                <h2 class="font-headline text-lg font-medium text-on-background">
+                    {{ $isRtl ? 'إعادة تعيين المصادقة الثنائية' : 'Reset MFA' }}
+                </h2>
+            </div>
+            <p class="text-on-surface-variant text-sm mb-5">
+                {{ $isRtl ? 'أنت على وشك إعادة تعيين المصادقة الثنائية للمستخدم' : 'You are about to reset MFA for' }}
+                <span id="mfa-reset-modal-user" class="font-semibold text-on-background"></span>.
+                {{ $isRtl ? 'اضغط مع الاستمرار على الزر أدناه لمدة 10 ثوانٍ للتأكيد.' : 'Press and hold the button below for 10 seconds to confirm.' }}
+            </p>
+
+            <form id="mfa-reset-modal-form" method="POST" action="">
+                @csrf
+                <button type="button"
+                        class="hold-confirm-btn relative overflow-hidden w-full inline-flex items-center justify-center gap-1 text-red-600 hover:text-red-700 transition-colors text-sm font-semibold px-4 py-3 rounded-lg border border-red-200"
+                        data-hold-ms="10000"
+                        data-label-idle="{{ $isRtl ? 'اضغط مع الاستمرار للتأكيد' : 'Press and hold to confirm' }}"
+                        data-label-holding="{{ $isRtl ? 'استمر بالضغط… ' : 'Keep holding… ' }}">
+                    <span class="hold-confirm-progress absolute inset-0 bg-red-100" style="width:0%"></span>
+                    <span class="hold-confirm-content relative inline-flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">lock_reset</span>
+                        <span class="hold-confirm-text">{{ $isRtl ? 'اضغط مع الاستمرار للتأكيد' : 'Press and hold to confirm' }}</span>
+                    </span>
+                </button>
+            </form>
+
+            <button type="button" id="mfa-reset-modal-cancel"
+                    class="mt-3 w-full text-center text-on-surface-variant hover:text-on-background text-sm font-medium py-2">
+                {{ $isRtl ? 'إلغاء' : 'Cancel' }}
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function initHoldConfirm(btn) {
+            const form = btn.closest('form');
+            const progress = btn.querySelector('.hold-confirm-progress');
+            const text = btn.querySelector('.hold-confirm-text');
+            const holdMs = parseInt(btn.dataset.holdMs, 10) || 10000;
+            const labelIdle = btn.dataset.labelIdle;
+            const labelHolding = btn.dataset.labelHolding;
+
+            let startTime = null;
+            let rafId = null;
+            let pressing = false;
+
+            function tick() {
+                const elapsed = Date.now() - startTime;
+                const pct = Math.min(100, (elapsed / holdMs) * 100);
+                progress.style.width = pct + '%';
+                text.textContent = labelHolding + Math.ceil((holdMs - elapsed) / 1000) + 's';
+
+                if (elapsed >= holdMs) {
+                    text.textContent = labelIdle;
+                    progress.style.width = '0%';
+                    pressing = false;
+                    form.submit();
+                    return;
+                }
+
+                if (pressing) {
+                    rafId = requestAnimationFrame(tick);
+                }
+            }
+
+            function start(e) {
+                e.preventDefault();
+                if (pressing) return;
+                pressing = true;
+                startTime = Date.now();
+                rafId = requestAnimationFrame(tick);
+            }
+
+            function cancel() {
+                if (!pressing) return;
+                pressing = false;
+                cancelAnimationFrame(rafId);
+                progress.style.width = '0%';
+                text.textContent = labelIdle;
+            }
+
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('mouseup', cancel);
+            btn.addEventListener('mouseleave', cancel);
+            btn.addEventListener('touchend', cancel);
+            btn.addEventListener('touchcancel', cancel);
+        }
+
+        const mfaModal = document.getElementById('mfa-reset-modal');
+        const mfaModalForm = document.getElementById('mfa-reset-modal-form');
+        const mfaModalUser = document.getElementById('mfa-reset-modal-user');
+        const mfaModalCancel = document.getElementById('mfa-reset-modal-cancel');
+        const mfaModalHoldBtn = mfaModalForm.querySelector('.hold-confirm-btn');
+
+        initHoldConfirm(mfaModalHoldBtn);
+
+        function openMfaModal(url, userName) {
+            mfaModalForm.action = url;
+            mfaModalUser.textContent = userName;
+            mfaModal.classList.remove('hidden');
+            mfaModal.classList.add('flex');
+        }
+
+        function closeMfaModal() {
+            mfaModal.classList.add('hidden');
+            mfaModal.classList.remove('flex');
+            mfaModalHoldBtn.dispatchEvent(new Event('mouseleave'));
+        }
+
+        document.querySelectorAll('.mfa-reset-trigger').forEach(function (trigger) {
+            trigger.addEventListener('click', function () {
+                openMfaModal(trigger.dataset.resetUrl, trigger.dataset.userName);
+            });
+        });
+
+        mfaModalCancel.addEventListener('click', closeMfaModal);
+        mfaModal.addEventListener('click', function (e) {
+            if (e.target === mfaModal) closeMfaModal();
+        });
+    </script>
 </body>
 </html>
