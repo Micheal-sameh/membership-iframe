@@ -1,11 +1,13 @@
+{{-- PWA disabled for now — re-enable by uncommenting this block
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#04162e">
-<link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Membership">
+--}}
+<link rel="icon" type="image/png" href="/favicon.png">
 <script src="https://cdn.tailwindcss.com"></script>
 @if($isRtl)
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -44,6 +46,7 @@
         },
     }
 </script>
+{{-- PWA disabled for now — re-enable by uncommenting this block
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -51,3 +54,4 @@
         });
     }
 </script>
+--}}

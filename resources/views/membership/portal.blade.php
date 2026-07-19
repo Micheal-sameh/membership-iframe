@@ -29,6 +29,8 @@
     </main>
 
     {{-- @include('membership.partials.no-devtools') --}}
+    {{-- PWA disabled for now — re-enable by uncommenting this include
     @include('membership.partials.install-prompt')
+    --}}
 </body>
 </html>
