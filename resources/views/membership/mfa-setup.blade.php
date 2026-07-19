@@ -112,7 +112,22 @@
                         <div class="flex items-center gap-2">
                             <code class="flex-1 text-sm font-mono font-semibold text-on-background tracking-wider break-all select-all">{{ $secret }}</code>
                             <button type="button"
-                                x-on:click="navigator.clipboard.writeText('{{ $secret }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                x-on:click="
+                                    (navigator.clipboard && window.isSecureContext
+                                        ? navigator.clipboard.writeText('{{ $secret }}')
+                                        : (() => {
+                                            const ta = document.createElement('textarea');
+                                            ta.value = '{{ $secret }}';
+                                            ta.style.position = 'fixed';
+                                            ta.style.opacity = '0';
+                                            document.body.appendChild(ta);
+                                            ta.select();
+                                            document.execCommand('copy');
+                                            document.body.removeChild(ta);
+                                        })()
+                                    );
+                                    copied = true; setTimeout(() => copied = false, 2000)
+                                "
                                 class="flex-shrink-0 p-2 rounded-lg text-on-surface-variant hover:text-secondary hover:bg-secondary-container/20 transition-colors"
                                 :title="copied ? '{{ $isRtl ? 'تم النسخ!' : 'Copied!' }}' : '{{ $isRtl ? 'نسخ' : 'Copy' }}'">
                                 <span x-show="!copied" class="material-symbols-outlined text-lg">content_copy</span>
