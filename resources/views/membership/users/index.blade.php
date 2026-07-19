@@ -60,7 +60,72 @@
                         <p class="text-on-surface-variant text-sm">{{ $isRtl ? 'لا يوجد مستخدمون بعد.' : 'No users yet.' }}</p>
                     </div>
                 @else
-                <table class="w-full text-sm">
+                <div class="sm:hidden divide-y divide-surface-container-high">
+                    @foreach($users as $u)
+                    <div class="p-4 {{ ! $u->is_active ? 'opacity-60' : '' }}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs flex-shrink-0">
+                                {{ collect(explode(' ', $u->name))->map(fn($p) => mb_substr($p, 0, 1))->take(2)->implode('') }}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="font-medium text-on-background truncate">{{ $u->name }}</div>
+                                <div class="text-on-surface-variant text-xs truncate">{{ $u->email }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            @if($u->roles->isNotEmpty())
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-container/30 text-secondary text-xs font-semibold">
+                                    {{ $u->roles->pluck('name')->implode(', ') }}
+                                </span>
+                            @endif
+
+                            @if($u->mfa_enabled)
+                                <span class="inline-flex items-center gap-1 text-green-700 text-xs font-semibold">
+                                    <span class="material-symbols-outlined text-sm">verified_user</span>
+                                    {{ $isRtl ? 'المصادقة الثنائية مفعّلة' : '2FA Enabled' }}
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 text-on-surface-variant text-xs">
+                                    <span class="material-symbols-outlined text-sm">gpp_maybe</span>
+                                    {{ $isRtl ? 'المصادقة الثنائية غير مفعّلة' : '2FA Disabled' }}
+                                </span>
+                            @endif
+
+                            @if($u->is_active)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
+                                    <span class="material-symbols-outlined text-sm">check_circle</span>
+                                    {{ $isRtl ? 'نشط' : 'Active' }}
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-xs font-semibold">
+                                    <span class="material-symbols-outlined text-sm">block</span>
+                                    {{ $isRtl ? 'غير نشط' : 'Inactive' }}
+                                </span>
+                            @endif
+                        </div>
+
+                        <div class="mt-3 pt-3 border-t border-surface-container-high flex items-center justify-end gap-4">
+                            @if($u->mfa_enabled)
+                            <button type="button"
+                                    class="mfa-reset-trigger inline-flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors text-xs font-semibold"
+                                    data-reset-url="{{ route('membership.users.mfa.reset', $u) }}"
+                                    data-user-name="{{ $u->name }}">
+                                <span class="material-symbols-outlined text-sm">lock_reset</span>
+                                {{ $isRtl ? 'إعادة تعيين المصادقة الثنائية' : 'Reset MFA' }}
+                            </button>
+                            @endif
+                            <a href="{{ route('membership.users.edit', $u) }}"
+                               class="inline-flex items-center gap-1 text-primary hover:text-secondary transition-colors text-xs font-semibold">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                                {{ $isRtl ? 'تعديل' : 'Edit' }}
+                            </a>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+                <table class="w-full text-sm hidden sm:table">
                     <thead>
                         <tr class="border-b border-surface-container-high text-left bg-surface-container-low/50">
                             <th class="px-4 py-3 font-semibold text-on-surface-variant">{{ $isRtl ? 'المستخدم' : 'User' }}</th>
